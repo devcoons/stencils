@@ -39,8 +39,8 @@ import re
 #########################################################################################
 #########################################################################################
 
-_START = re.compile(r"^=+\s*TEMPLATE\s*:(?P<key>[^\s=]+)\s*=+\s*$")
-_END   = re.compile(r"^=+\s*/TEMPLATE\s*=+\s*$")
+_START = re.compile(r"^\s*=+\s*TEMPLATE\s*:(?P<key>[^\s=]+)\s*=+\s*$")
+_END   = re.compile(r"^\s*=+\s*/TEMPLATE\s*=+\s*$")
 
 #########################################################################################
 
@@ -122,6 +122,7 @@ def load(targets: Union[str, Path, Iterable[Union[str, Path]]]) -> Dict[str, str
                     )
                 continue
             result[key] = text
+            result[f":{key}"] = text
             provenance[key] = path
 
     if not result:
