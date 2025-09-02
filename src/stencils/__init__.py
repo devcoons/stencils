@@ -48,6 +48,17 @@ class TemplateConflictError(Exception): ...
 class TemplateParseError(Exception): ...
 
 #########################################################################################
+
+class DropMissing(dict):
+    """Mapping that returns '' for any missing key when used with format_map()."""
+    def __missing__(self, key):
+        return ""
+
+def render(template: str, data: dict) -> str:
+    """Render a template, defaulting any missing placeholder to ''."""
+    return template.format_map(DropMissing(data))
+
+#########################################################################################
 #########################################################################################
 
 def _iter_blocks_in_file(path: Path):
