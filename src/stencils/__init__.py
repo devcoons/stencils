@@ -33,7 +33,7 @@ __all__ = ["load", "TemplateConflictError", "TemplateParseError", "__version__",
 #########################################################################################
 
 from pathlib import Path
-from typing import Union, Iterable, Dict
+from typing import Union, Iterable, Dict, Mapping, Literal, Any
 import re
 
 #########################################################################################
@@ -49,14 +49,27 @@ class TemplateParseError(Exception): ...
 
 #########################################################################################
 
-class DropMissing(dict):
-    """Mapping that returns '' for any missing key when used with format_map()."""
-    def __missing__(self, key):
-        return ""
+class _DefaultingDict(dict):
+    def __init__(self, base: Mapping[str, Any], factory):
+        super().__init__(base)
+        self._factory = factory
+    def __missing__(self, key: str):
+        return self._factory(key)
 
-def render(template: str, data: dict) -> str:
+#########################################################################################
+
+def render(template: str, data: Mapping[str, Any] | None = None, *, on_missing: Literal['empty', 'keep', 'error'] = 'empty') -> str:
     """Render a template, defaulting any missing placeholder to ''."""
-    return template.format_map(DropMissing(data))
+    data = {} if data is None else data
+    if on_missing == 'empty':
+        mapping = _DefaultingDict(data, lambda k: '')
+    elif on_missing == 'keep':
+        mapping = _DefaultingDict(data, lambda k: '{' + k + '}')
+    elif on_missing == 'error':
+        mapping = dict(data)
+    else:
+        raise ValueError(f"invalid on_missing: {on_missing}")
+    return template.format_map(mapping)
 
 #########################################################################################
 #########################################################################################

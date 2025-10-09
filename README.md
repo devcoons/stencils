@@ -98,6 +98,23 @@ render(templates["farewell"], {})
 # -> "Goodbye , see you soon!"
 ```
 
+### Controlling Missing Placeholders
+
+You can control how **missing placeholders** are handled with the `on_missing` option.
+
+```python
+render(template, data, on_missing="empty")
+```
+
+**Available options:**
+
+| Option | Description | Example Output |
+|:-------|:-------------|:---------------|
+| `"empty"` *(default)* | Replace missing keys with an empty string. | `"Hello , welcome!"` |
+| `"keep"` | Keep the original placeholder text `{key}` if it’s missing. | `"Hello {name}, welcome!"` |
+| `"error"` | Raise a `KeyError` for any missing placeholder. | *Raises* `KeyError: 'name'` |
+
+
 ## Errors
 
 | Exception | Description |
