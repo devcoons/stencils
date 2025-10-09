@@ -24,7 +24,7 @@
 #                                                                                       #
 #########################################################################################
 
-__version__ = '0.1.7'
+__version__ = '0.1.8'
 __name__ = "stencils"
 __all__ = ["load", "TemplateConflictError", "TemplateParseError", "__version__",]
 
