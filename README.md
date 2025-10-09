@@ -98,21 +98,39 @@ render(templates["farewell"], {})
 # -> "Goodbye , see you soon!"
 ```
 
-### Controlling Missing Placeholders
+### Controlling Missing or Invalid Placeholders
 
-You can control how **missing placeholders** are handled with the `on_missing` option.
+You can control how **missing** and **invalid** placeholders are handled via `on_missing` and `on_error` options.
 
 ```python
-render(template, data, on_missing="empty")
+render(template, data, on_missing="empty", on_error="keep")
 ```
 
 **Available options:**
 
-| Option | Description | Example Output |
-|:-------|:-------------|:---------------|
-| `"empty"` *(default)* | Replace missing keys with an empty string. | `"Hello , welcome!"` |
-| `"keep"` | Keep the original placeholder text `{key}` if it’s missing. | `"Hello {name}, welcome!"` |
-| `"error"` | Raise a `KeyError` for any missing placeholder. | *Raises* `KeyError: 'name'` |
+| Parameter | Option | Description | Example Output |
+|:-----------|:--------|:-------------|:---------------|
+| `on_missing` | `"empty"` *(default)* | Replace missing keys with an empty string. | `"Hello , welcome!"` |
+| | `"keep"` | Keep the original placeholder text `{key}` if it’s missing. | `"Hello {name}, welcome!"` |
+| | `"error"` | Raise a `KeyError` for missing placeholders. | *Raises* `KeyError: 'name'` |
+| `on_error` | `"keep"` *(default)* | Keep the original placeholder if formatting fails (e.g., bad spec). | `"Value: {price:.2f}"` |
+| | `"empty"` | Replace invalid placeholders with an empty string. | `"Value: "` |
+| | `"error"` | Raise the formatting exception immediately. | *Raises* `ValueError` or similar |
+
+
+### Foreign Placeholders (`${...}`)
+
+Some templates may include foreign placeholders (like shell or CI variables) using `${...}` syntax.  
+These are **not interpreted** by Stencils and are automatically **escaped** so they remain intact.
+
+```python
+tpl = "User: {name}, shell: ${uname -u}, gha: ${{ matrix.os }}"
+
+render(tpl, {"name": "Io"})
+# -> "User: Io, shell: ${uname -u}, gha: ${{ matrix.os }}"
+```
+
+You can disable this behavior with `protect_foreign=False` if you want raw handling.
 
 
 ## Errors

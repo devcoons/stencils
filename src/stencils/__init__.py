@@ -33,6 +33,7 @@ __all__ = ["load", "TemplateConflictError", "TemplateParseError", "__version__",
 #########################################################################################
 
 from pathlib import Path
+import string
 from typing import Union, Iterable, Dict, Mapping, Literal, Any
 import re
 
@@ -65,20 +66,52 @@ def _protect_foreign_placeholders(s: str) -> str:
         return "${{" + inner + "}}"
     return _FOREIGN_SYS_PLACEHOLDER.sub(repl, s)
 
+#########################################################################################
 
-def render(template: str, data: Mapping[str, Any] | None = None, *, on_missing: Literal['empty', 'keep', 'error'] = 'empty') -> str:
+def _safe_format(template: str, mapping: Mapping[str, Any], *, on_missing: Literal['empty', 'keep', 'error'], on_error: Literal['empty', 'keep', 'error']) -> str:
+    fmt = string.Formatter()
+    out: list[str] = []
+    for literal, field_name, format_spec, conversion in fmt.parse(template):
+        out.append(literal)
+        if field_name is None:
+            continue
+        placeholder = "{"+field_name
+        if conversion:
+            placeholder += "!" + conversion
+        if format_spec:
+            placeholder += ":" + format_spec
+        placeholder += "}"
+        try:
+            obj, _ = fmt.get_field(field_name, (), mapping)
+            if conversion:
+                obj = fmt.convert_field(obj, conversion)
+            rendered = fmt.format_field(obj, format_spec)
+            out.append(rendered)
+        except KeyError:
+            if on_missing == 'error':
+                raise
+            elif on_missing == 'keep':
+                out.append(placeholder)
+            else: 
+                out.append('')
+        except Exception:
+            if on_error == 'error':
+                raise
+            elif on_error == 'keep':
+                out.append(placeholder)
+            else: 
+                out.append('')
+    return "".join(out)
+
+#########################################################################################
+
+def render(template: str, data: Mapping[str, Any] | None = None, *, on_missing: Literal['empty', 'keep', 'error'] = 'empty', on_error: Literal['empty', 'keep', 'error'] = 'keep',  protect_foreign: bool = True) -> str:
     """Render a template, defaulting any missing placeholder to ''."""
-    template = _protect_foreign_placeholders(template)
     data = {} if data is None else data
-    if on_missing == 'empty':
-        mapping = _DefaultingDict(data, lambda k: '')
-    elif on_missing == 'keep':
-        mapping = _DefaultingDict(data, lambda k: '{' + k + '}')
-    elif on_missing == 'error':
-        mapping = dict(data)
-    else:
-        raise ValueError(f"invalid on_missing: {on_missing}")
-    return template.format_map(mapping)
+    if protect_foreign:
+        template = _protect_foreign_placeholders(template)
+        
+    return _safe_format(template, data, on_missing=on_missing, on_error=on_error)
 
 #########################################################################################
 #########################################################################################
