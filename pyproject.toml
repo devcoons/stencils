@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stencils"
-version = "0.1.6"
+version = "0.1.7"
 description = "A simple templates loader"
 readme = "README.md"
 authors = [{ name = "Ioannis D (devcoons)", email = "support@devcoons.com" }]
