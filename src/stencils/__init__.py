@@ -41,6 +41,7 @@ import re
 
 _START = re.compile(r"^\s*=+\s*TEMPLATE\s*:(?P<key>[^\s=]+)\s*=+\s*$")
 _END   = re.compile(r"^\s*=+\s*/TEMPLATE\s*=+\s*$")
+_FOREIGN_SYS_PLACEHOLDER = re.compile(r"\$\{([^{}]*)\}")
 
 #########################################################################################
 
@@ -58,8 +59,16 @@ class _DefaultingDict(dict):
 
 #########################################################################################
 
+def _protect_foreign_placeholders(s: str) -> str:
+    def repl(m: re.Match[str]) -> str:
+        inner = m.group(1)
+        return "${{" + inner + "}}"
+    return _FOREIGN_SYS_PLACEHOLDER.sub(repl, s)
+
+
 def render(template: str, data: Mapping[str, Any] | None = None, *, on_missing: Literal['empty', 'keep', 'error'] = 'empty') -> str:
     """Render a template, defaulting any missing placeholder to ''."""
+    template = _protect_foreign_placeholders(template)
     data = {} if data is None else data
     if on_missing == 'empty':
         mapping = _DefaultingDict(data, lambda k: '')
